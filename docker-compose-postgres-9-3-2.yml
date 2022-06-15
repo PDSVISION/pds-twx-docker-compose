@@ -14,9 +14,9 @@ services:
     environment:
       # NOTE: Set POSTGRES_USER, POSTGRES_PASSWORD POSTGRES_DB for connecting
       # to the postgres as super user
-      - "POSTGRES_USER=pgadmin"
-      - "POSTGRES_PASSWORD=pgadmin"
-      - "POSTGRES_DB=pgadmin"
+      - "POSTGRES_USER=twxadmin"
+      - "POSTGRES_PASSWORD=twxadmin"
+      - "POSTGRES_DB=twxadmin"
 
   postgresql-init:
     image: ghcr.io/pdsvision/thingworx-platform-postgres-init:9.3.2
@@ -31,14 +31,14 @@ services:
     environment:
       # NOTE: Set DATABASE_ADMIN_USERNAME, DATABASE_ADMIN_PASSWORD DATABASE_ADMIN_SCHEMA for connecting
       # to the postgres as super user
-      - "DATABASE_ADMIN_USERNAME=pgadmin"
-      - "DATABASE_ADMIN_PASSWORD=pgadmin"
-      - "DATABASE_ADMIN_SCHEMA=pgadmin"
+      - "DATABASE_ADMIN_USERNAME=twxadmin"
+      - "DATABASE_ADMIN_PASSWORD=twxadmin"
+      - "DATABASE_ADMIN_SCHEMA=twxadmin"
       - "DATABASE_HOST=postgresql"
       - "DATABASE_PORT=5432"
-      - "TWX_DATABASE_USERNAME=twxadmin"
-      - "TWX_DATABASE_SCHEMA=twxadmin"
-      - "TWX_DATABASE_PASSWORD=twxadmin"
+      - "TWX_DATABASE_USERNAME=thingworx"
+      - "TWX_DATABASE_SCHEMA=thingworx"
+      - "TWX_DATABASE_PASSWORD=thingworx"
       - "TABLESPACE_LOCATION=/var/lib/postgresql/data"
   platform:
     image: ghcr.io/pdsvision/thingworx-platform-postgres:9.3.2
@@ -54,9 +54,9 @@ services:
       # NOTE: Set KEYSTORE_PASSWORD (Must match value from security-cli container)
       - "DATABASE_HOST=postgresql"
       - "DATABASE_PORT=5432"
-      - "TWX_DATABASE_SCHEMA=twxadmin"
-      - "TWX_DATABASE_USERNAME=twxadmin"
-      - "TWX_DATABASE_PASSWORD=twxadmin"
+      - "TWX_DATABASE_SCHEMA=thingworx"
+      - "TWX_DATABASE_USERNAME=thingworx"
+      - "TWX_DATABASE_PASSWORD=thingworx"
       # NOTE: The following must be set for the Platform to start. This will be
       # the initial Administrator password.
       - "THINGWORX_INITIAL_ADMIN_PASSWORD=thingworxvision"
