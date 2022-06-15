@@ -4,7 +4,7 @@ services:
   platform:
     image: ghcr.io/pdsvision/thingworx-platform-h2:9.3.2
     ports:
-      - "8080"
+      - "80-1000:8080"
     environment:
       - "CATALINA_OPTS=-Xms2g -Xmx4g"
       # NOTE: Set KEYSTORE_PASSWORD (Must match value from security-cli container)
