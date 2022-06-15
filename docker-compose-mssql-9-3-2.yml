@@ -1,0 +1,75 @@
+version: '3.8'
+
+volumes:
+  storage:
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-16.04
+    ports:
+      - "1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -U SA -P "$${SA_PASSWORD}" -h -1 -Q "set nocount on; select serverproperty('ServerName')" | grep -w "$${HOSTNAME}"
+      interval: 15s
+    environment:
+      - "SA_PASSWORD=ThingworxVision009"
+      - "ACCEPT_EULA=Y"
+
+  mssql-init:
+    image: ghcr.io/pdsvision/thingworx-platform-mssql-init:9.3.2
+    entrypoint: bash -c -x "/usr/local/bin/db-check.sh && /usr/local/bin/db-setup.sh && sleep infinity"
+    healthcheck:
+      test: [ "CMD-SHELL", "grep 'success' tmp/status.txt || exit 1" ]
+      interval: 15s
+      retries: 5
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      - "DATABASE_HOST=mssql"
+      - "DATABASE_PORT=1433"
+      - "DATABASE_ADMIN_USERNAME=SA"
+      - "DATABASE_ADMIN_PASSWORD=ThingworxVision009"
+      - "TWX_DATABASE_USERNAME=thingworx"
+      - "TWX_DATABASE_SCHEMA=thingworx"
+      - "TWX_DATABASE_PASSWORD=ThingworxVision009"
+
+  platform:
+    image: ghcr.io/pdsvision/thingworx-platform-mssql:9.3.2
+    healthcheck:
+      test: curl -f localhost:8080/Thingworx/health
+      interval: 15s
+    depends_on:
+      mssql-init:
+        condition: service_healthy
+    ports:
+      - "80-200:8080"
+    environment:
+      - "CATALINA_OPTS=-Xms2g -Xmx4g"
+      - "DATABASE_HOST=mssql"
+      - "DATABASE_PORT=1433"
+      - "TWX_DATABASE_USERNAME=thingworx"
+      - "TWX_DATABASE_PASSWORD=ThingworxVision009"
+      - "TWX_DATABASE_SCHEMA=thingworx"
+      # NOTE: The following must be set for the Platform to start. This will be
+      # the initial Administrator password.
+      - "THINGWORX_INITIAL_ADMIN_PASSWORD=thingworxvision"
+      # NOTE: The following must be set for the Platform to start. This will be
+      # the initial MetricsUser password.
+      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=thingworxvision"
+      #Uncomment the below to automatically download license
+      #- "LS_USERNAME=${PTCUSERNAME}"
+      #- "LS_PASSWORD=${PTCPASSWORD}"
+      - "EXTPKG_IMPORT_POLICY_ENABLED=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JARRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JSRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_CSSRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JSONRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_WEBAPPRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_ENTITIES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_EXTENTITIES=true"
+      - "ENCRYPT_CREDENTIALS=false"
+    # Use this to mount your orgs licence file, if not ThingWorx will fallback to temporary licence
+    #volumes:
+    #  - "storage:/ThingworxStorage"
+    #  - ./license.bin:/ThingworxPlatform/license.bin
