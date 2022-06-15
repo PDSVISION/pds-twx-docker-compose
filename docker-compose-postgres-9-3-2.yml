@@ -14,9 +14,9 @@ services:
     environment:
       # NOTE: Set POSTGRES_USER, POSTGRES_PASSWORD POSTGRES_DB for connecting
       # to the postgres as super user
-      - "POSTGRES_USER=pgadmin"
-      - "POSTGRES_PASSWORD=pgadmin"
-      - "POSTGRES_DB=pgadmin"
+      - "POSTGRES_USER=twxadmin"
+      - "POSTGRES_PASSWORD=twxadmin"
+      - "POSTGRES_DB=twxadmin"
 
   postgresql-init:
     image: ghcr.io/pdsvision/thingworx-platform-postgres-init:9.3.2
