@@ -1,0 +1,76 @@
+version: '3.8'
+
+volumes:
+  storage:
+
+services:
+  postgresql:
+    image: postgres:13.0
+    ports:
+      - "5432"
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 15s
+    environment:
+      # NOTE: Set POSTGRES_USER, POSTGRES_PASSWORD POSTGRES_DB for connecting
+      # to the postgres as super user
+      - "POSTGRES_USER=pgadmin"
+      - "POSTGRES_PASSWORD=pgadmin"
+      - "POSTGRES_DB=pgadmin"
+
+  postgresql-init:
+    image: ghcr.io/pdsvision/thingworx-platform-postgres-init:9.3.2
+    entrypoint: bash -c -x "/usr/local/bin/db-check.sh && /usr/local/bin/db-setup.sh && sleep infinity"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      # NOTE: Set DATABASE_ADMIN_USERNAME, DATABASE_ADMIN_PASSWORD DATABASE_ADMIN_SCHEMA for connecting
+      # to the postgres as super user
+      - "DATABASE_ADMIN_USERNAME=twxadmin"
+      - "DATABASE_ADMIN_PASSWORD=twxadmin"
+      - "DATABASE_ADMIN_SCHEMA=twxadmin"
+      - "DATABASE_HOST=postgresql"
+      - "DATABASE_PORT=5432"
+      - "TWX_DATABASE_USERNAME=admin"
+      - "TWX_DATABASE_SCHEMA=thingworx"
+      - "TWX_DATABASE_PASSWORD=admin"
+      - "TABLESPACE_LOCATION=/var/lib/postgresql/data"
+  platform:
+    image: ghcr.io/pdsvision/thingworx-platform-postgres:9.3.2
+    depends_on:
+      postgresql-init:
+        condition: service_healthy
+    ports:
+      - "80-200:8080"
+    environment:
+      - "CATALINA_OPTS=-Xms2g -Xmx4g"
+      #SSL Configuration
+      - "ENABLE_HTTP=true"
+      # NOTE: Set KEYSTORE_PASSWORD (Must match value from security-cli container)
+      - "DATABASE_HOST=postgresql"
+      - "DATABASE_PORT=5432"
+      - "TWX_DATABASE_SCHEMA=thingworx"
+      - "TWX_DATABASE_USERNAME=admin"
+      - "TWX_DATABASE_PASSWORD=admin"
+      # NOTE: The following must be set for the Platform to start. This will be
+      # the initial Administrator password.
+      - "THINGWORX_INITIAL_ADMIN_PASSWORD=thingworxvision"
+      # NOTE: The following must be set for the Platform to start. This will be
+      # the initial MetricsUser password.
+      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=thingworxvision"
+      #Uncomment the below to automatically download license
+      #- "LS_USERNAME=${PTCUSERNAME}"
+      #- "LS_PASSWORD=${PTCPASSWORD}"
+      - "EXTPKG_IMPORT_POLICY_ENABLED=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JARRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JSRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_CSSRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JSONRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_WEBAPPRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_ENTITIES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_EXTENTITIES=true"
+    # Use this to mount your orgs licence file, if not ThingWorx will fallback to temporary licence
+    #volumes:
+    #  - storage:/ThingworxStorage
+    #  - ./license.bin:/ThingworxPlatform/license.bin
