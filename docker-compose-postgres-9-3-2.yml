@@ -21,6 +21,10 @@ services:
   postgresql-init:
     image: ghcr.io/pdsvision/thingworx-platform-postgres-init:9.3.2
     entrypoint: bash -c -x "/usr/local/bin/db-check.sh && /usr/local/bin/db-setup.sh && sleep infinity"
+    healthcheck:
+      test: [ "CMD-SHELL", "grep 'success' tmp/status.txt || exit 1" ]
+      interval: 15s
+      retries: 5
     depends_on:
       postgresql:
         condition: service_healthy
