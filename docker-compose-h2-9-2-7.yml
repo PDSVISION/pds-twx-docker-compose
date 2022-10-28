@@ -19,8 +19,8 @@ services:
       # the initial MetricsUser password.
       - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=thingworxvision"
       #Uncomment the below to automatically download license
-      #- "LS_USERNAME=${PTCUSERNAME}"
-      #- "LS_PASSWORD=${PTCPASSWORD}"
+      - "LS_USERNAME=${LS_USERNAME}"
+      - "LS_PASSWORD=${LS_PASSWORD}"
       - "EXTPKG_IMPORT_POLICY_ENABLED=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_JARRES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_JSRES=true"

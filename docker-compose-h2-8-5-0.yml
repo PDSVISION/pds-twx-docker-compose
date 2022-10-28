@@ -7,20 +7,16 @@ services:
       - "80-200:8080"
     environment:
       - "CATALINA_OPTS=-Xms2g -Xmx4g"
-      # NOTE: Set KEYSTORE_PASSWORD (Must match value from security-cli container)
-      # NOTE: TWX_DATABASE_USERNAME and TWX_DATABASE_PASSWORD for H2 platform must
-      # be set to to create the initial database, or connect to a previous instance.
-      - "TWX_DATABASE_USERNAME=admin"
-      - "TWX_DATABASE_PASSWORD=admin"
-      # NOTE: The following must be set for the Platform to start. This will be
-      # the initial Administrator password.
-      - "THINGWORX_INITIAL_ADMIN_PASSWORD=thingworxvision"
-      # NOTE: The following must be set for the Platform to start. This will be
-      # the initial MetricsUser password.
-      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=thingworxvision"
-      #Uncomment the below to automatically download license
-      #- "LS_USERNAME=${PTCUSERNAME}"
-      #- "LS_PASSWORD=${PTCPASSWORD}"
+      - "ENABLE_HTTP=true"
+      - "DATABASE_HOST=postgresql"
+      - "DATABASE_PORT=5432"
+      - "TWX_DATABASE_SCHEMA=twadmin"
+      - "TWX_DATABASE_USERNAME=twadmin"
+      - "TWX_DATABASE_PASSWORD=twadmin"
+      - "THINGWORX_INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
+      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=${METRICS_PASSWORD}"
+      - "LS_USERNAME=${LS_USERNAME}"
+      - "LS_PASSWORD=${LS_PASSWORD}"
       - "EXTPKG_IMPORT_POLICY_ENABLED=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_JARRES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_JSRES=true"
@@ -29,14 +25,3 @@ services:
       - "EXTPKG_IMPORT_POLICY_ALLOW_WEBAPPRES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_ENTITIES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_EXTENTITIES=true"
-      #SSL Configuration
-      - "ENABLE_HTTP=true"
-      #- "ENABLE_HTTPS=true"
-      ## NOTE: If supplying a keystore for SSL, you must set your keystore password
-      #- "SSL_KEYSTORE_PASSWORD="
-    # Use this to mount your orgs licence file, if not ThingWorx will fallback to temporary licence
-    #volumes:
-    #  - storage:/ThingworxStorage
-    #Use this to mount a custom licence.bin, place the license.bin in the same directory as this file
-    #  - C:/Docker/ThingWorx/Platform:/ThingworxPlatform
-    #  - C:/Docker/ThingWorx/Storage:/ThingworxStorage

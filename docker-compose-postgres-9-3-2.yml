@@ -12,8 +12,6 @@ services:
       test: pg_isready -U postgres
       interval: 15s
     environment:
-      # NOTE: Set POSTGRES_USER, POSTGRES_PASSWORD POSTGRES_DB for connecting
-      # to the postgres as super user
       - "POSTGRES_USER=postgres"
       - "POSTGRES_PASSWORD=postgres"
       - "POSTGRES_DB=postgres"
@@ -29,8 +27,6 @@ services:
       postgresql:
         condition: service_healthy
     environment:
-      # NOTE: Set DATABASE_ADMIN_USERNAME, DATABASE_ADMIN_PASSWORD DATABASE_ADMIN_SCHEMA for connecting
-      # to the postgres as super user
       - "DATABASE_ADMIN_USERNAME=postgres"
       - "DATABASE_ADMIN_PASSWORD=postgres"
       - "DATABASE_ADMIN_SCHEMA=postgres"
@@ -50,23 +46,16 @@ services:
       - "80-200:8080"
     environment:
       - "CATALINA_OPTS=-Xms2g -Xmx4g"
-      #SSL Configuration
       - "ENABLE_HTTP=true"
-      # NOTE: Set KEYSTORE_PASSWORD (Must match value from security-cli container)
       - "DATABASE_HOST=postgresql"
       - "DATABASE_PORT=5432"
       - "TWX_DATABASE_SCHEMA=twadmin"
       - "TWX_DATABASE_USERNAME=twadmin"
       - "TWX_DATABASE_PASSWORD=twadmin"
-      # NOTE: The following must be set for the Platform to start. This will be
-      # the initial Administrator password.
-      - "THINGWORX_INITIAL_ADMIN_PASSWORD=thingworxvision"
-      # NOTE: The following must be set for the Platform to start. This will be
-      # the initial MetricsUser password.
-      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=thingworxvision"
-      #Uncomment the below to automatically download license
-      #- "LS_USERNAME=${PTCUSERNAME}"
-      #- "LS_PASSWORD=${PTCPASSWORD}"
+      - "THINGWORX_INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
+      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=${METRICS_PASSWORD}"
+      - "LS_USERNAME=${LS_USERNAME}"
+      - "LS_PASSWORD=${LS_PASSWORD}"
       - "EXTPKG_IMPORT_POLICY_ENABLED=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_JARRES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_JSRES=true"
@@ -75,7 +64,3 @@ services:
       - "EXTPKG_IMPORT_POLICY_ALLOW_WEBAPPRES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_ENTITIES=true"
       - "EXTPKG_IMPORT_POLICY_ALLOW_EXTENTITIES=true"
-    # Use this to mount your orgs licence file, if not ThingWorx will fallback to temporary licence
-    #volumes:
-    #  - "C:/Users/fredr/Downloads/PlatformStorage/Platform:/ThingworxStorage"
-    #  - ./license.bin:/ThingworxPlatform/license.bin
