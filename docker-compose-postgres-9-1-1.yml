@@ -1,0 +1,66 @@
+version: '3.8'
+
+volumes:
+  storage:
+
+services:
+  postgresql:
+    image: postgres:13.0
+    ports:
+      - "5432"
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 15s
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+      - "POSTGRES_DB=postgres"
+
+  postgresql-init:
+    image: ghcr.io/pdsvision/thingworx-platform-postgres-init:9.3.2
+    entrypoint: bash -c -x "/usr/local/bin/db-check.sh && /usr/local/bin/db-setup.sh && sleep infinity"
+    healthcheck:
+      test: [ "CMD-SHELL", "grep 'success' tmp/status.txt || exit 1" ]
+      interval: 15s
+      retries: 5
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      - "DATABASE_ADMIN_USERNAME=postgres"
+      - "DATABASE_ADMIN_PASSWORD=postgres"
+      - "DATABASE_ADMIN_SCHEMA=postgres"
+      - "DATABASE_HOST=postgresql"
+      - "DATABASE_PORT=5432"
+      - "TWX_DATABASE_USERNAME=twadmin"
+      - "TWX_DATABASE_SCHEMA=twadmin"
+      - "TWX_DATABASE_PASSWORD=twadmin"
+      - "TABLESPACE_LOCATION=/var/lib/postgresql/data"
+      
+  platform:
+    image: ghcr.io/pdsvision/thingworx-platform-postgres:9.3.2
+    depends_on:
+      postgresql-init:
+        condition: service_healthy
+    ports:
+      - "80-200:8080"
+    environment:
+      - "CATALINA_OPTS=-Xms2g -Xmx4g"
+      - "ENABLE_HTTP=true"
+      - "DATABASE_HOST=postgresql"
+      - "DATABASE_PORT=5432"
+      - "TWX_DATABASE_SCHEMA=twadmin"
+      - "TWX_DATABASE_USERNAME=twadmin"
+      - "TWX_DATABASE_PASSWORD=twadmin"
+      - "THINGWORX_INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
+      - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=${METRICS_PASSWORD}"
+      - "LS_USERNAME=${LS_USERNAME}"
+      - "LS_PASSWORD=${LS_PASSWORD}"
+      - "EXTPKG_IMPORT_POLICY_ENABLED=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JARRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JSRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_CSSRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_JSONRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_WEBAPPRES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_ENTITIES=true"
+      - "EXTPKG_IMPORT_POLICY_ALLOW_EXTENTITIES=true"
