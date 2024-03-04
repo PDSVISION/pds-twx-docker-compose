@@ -66,7 +66,7 @@ services:
   influx:
     image: influxdb:latest
     ports:
-      - "8086":"8086"
+      - "8086:8086"
     environment:
       - "DOCKER_INFLUXDB_INIT_MODE=setup"
       - "DOCKER_INFLUXDB_INIT_USERNAME=Administrator"
