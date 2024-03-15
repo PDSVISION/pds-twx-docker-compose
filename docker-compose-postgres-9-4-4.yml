@@ -24,8 +24,7 @@ services:
       interval: 15s
       retries: 5
     depends_on:
-      postgresql:
-        condition: service_healthy
+      - postgresql
     environment:
       - "DATABASE_ADMIN_USERNAME=postgres"
       - "DATABASE_ADMIN_PASSWORD=postgres"
@@ -40,8 +39,7 @@ services:
   platform:
     image: ghcr.io/pdsvision/thingworx-platform-postgres:9.4.4
     depends_on:
-      postgresql-init:
-        condition: service_healthy
+      - postgresql-init
     ports:
       - "80-200:8080"
     environment:
