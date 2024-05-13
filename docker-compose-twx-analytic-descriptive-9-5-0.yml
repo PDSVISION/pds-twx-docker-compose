@@ -1,0 +1,16 @@
+# This is the docker compose file that you can use to build and run the descriptive analytics.
+version: '3'
+services:
+  twpas_descriptive:
+    image: descriptive_analytics:9.5.0-r3
+    ports:
+      - "9301:9301"
+    environment:
+    - THINGWORX_APPLICATION_KEY=
+    - THINGWORX_HOSTNAME=
+    - THINGWORX_PORT=
+    - THINGWORX_ISSECURE=
+    build:
+      context: ./descriptive-analytics
+      args:
+        base_image: 'ubuntu:22.04'
