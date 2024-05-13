@@ -6,10 +6,10 @@ services:
     ports:
       - "9301:9301"
     environment:
-    - THINGWORX_APPLICATION_KEY=
-    - THINGWORX_HOSTNAME=
-    - THINGWORX_PORT=
-    - THINGWORX_ISSECURE=
+    - THINGWORX_APPLICATION_KEY=${THINGWORX_APPLICATION_KEY}
+    - THINGWORX_HOSTNAME=${THINGWORX_HOSTNAME}
+    - THINGWORX_PORT=${THINGWORX_PORT}
+    - THINGWORX_ISSECURE=${THINGWORX_ISSECURE}
     build:
       context: ./descriptive-analytics
       args:
