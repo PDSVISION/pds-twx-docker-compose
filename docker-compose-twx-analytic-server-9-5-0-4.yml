@@ -1,0 +1,207 @@
+# docker-compose file which spins up and manages various services required for Thingworx Analytics Server.
+# This file DOES NOT spin up ThingWorx Platform or a database server. It is responsible for standing up Thingworx Analytics Server only.
+# For more detailed help on using this file, refer to the packaged documentation.
+
+# docker-compose version
+version: '3'
+###############################################################################################################
+
+services:
+
+  #=====================
+  # Communication Layer
+  #---------------------
+  
+  # Zookeeper is the job queue. The analytics workers pick up jobs from here.
+  twas-zookeeper:
+    image: bitnami/zookeeper:3.9.1
+    networks:
+      - twasnetwork
+    ports:
+      - "2181:2181"
+    container_name: twas-zookeeper
+    restart: unless-stopped
+    # If using secured Zookeeper then configurations below need to be uncommented. Keystore, truststore and passwords must be provided.
+    # If PEM files is used in env_file, then 'zookeeper.ssl.keyStore.location' and 'zookeeper.ssl.trustStore.location' should have the value '/zookeeper/certificates/keystore.jks' and '/zookeeper/certificates/truststore.jks' respectively.
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    #  ZOO_TLS_CLIENT_ENABLE: 'yes'
+    #  ZOO_CFG_EXTRA: secureClientPort=3181
+    #  JVMFLAGS: >
+    #    -Dzookeeper.serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory 
+    #    -Dzookeeper.ssl.keyStore.location=<KEYSTORE_LOCATION>
+    #    -Dzookeeper.ssl.keyStore.password=<KEYSTORE_PASSWORD>
+    #    -Dzookeeper.ssl.trustStore.location=<TRUSTSTORE_LOCATION>
+    #    -Dzookeeper.ssl.trustStore.password=<TRUSTSTORE_PASSWORD>
+    volumes:
+    # If using secured Zookeeper, set the path to directory that contains the keystores.
+    # The local path should be mounted to the same directory as CERTIFICATE_DIRECTORY in env_file.
+      - twas_zookeeper_secrets:/zookeeper/certificates
+      #- PATH_TO_CERTIFICATES:/CERTIFICATE_DIRECTORY
+
+  # The gateway is the communication point between ThingWorx Platform and the other microservices.
+  # All ThingWorx Analytics Server communication goes through here.
+  twas-gateway:
+    image: ghcr.io/pdsvision/twx-analytics-adapter-ms:9.5.0.4
+    networks:
+      - twasnetwork
+    ports:
+      - "9101:9101"
+    container_name: twas-adapter-ms
+    volumes:
+      - twas_properties:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config
+      - twas_data:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/data
+      - twas_storage:/AnalyticsServiceStorage
+      # If using TLS, set the path to directory that contains the certificates. 
+      # The local path should be mounted to the same directory as CERTIFICATE_DIRECTORY in env_file.
+      #- PATH_TO_CERTIFICATES:/CERTIFICATE_DIRECTORY
+    environment:
+      - JAVA_OPTS=-Xms128m -Xmx128m
+      
+      - TWAS_THINGWORX_HOSTNAME=${THINGWORX_HOSTNAME}
+      - TWAS_THINGWORX_PORT=${THINGWORX_PORT}
+      - TWAS_THINGWORX_APPLICATION_KEY=${THINGWORX_APPLICATION_KEY}
+      - TWAS_THINGWORX_ISSECURE=${THINGWORX_ISSECURE}
+      
+      - TWX_CONTAINER=async
+      
+      - ENCRYPTION_CONTAINER=async
+      - LOGBACK_FILE=file:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config/logback.xml
+      - KEY_STORE_API_KEY_EXPIRATION=2099-01-30
+      - USE_HTTPS=false
+      - USE_SECURE_ZOOKEEPER=false
+    build:
+      context: ./edge
+      args:
+        base_image: 'ubuntu:22.04'              
+
+  #================
+  # REST API Layer
+  #----------------
+
+  # Stores the results of all the job executions.
+  twas-async:
+    image: ghcr.io/pdsvision/twx-analytics-async-ms:9.5.0.4
+    networks:
+      - twasnetwork
+    ports:
+      - "8900:8900"
+      - "8901:8901"
+    container_name: twas-async-ms
+    volumes:
+      - twas_properties:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config
+      - twas_data:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/data
+      - twas_storage:/AnalyticsServiceStorage
+      - twas_zookeeper_secrets:/zookeeper/certificates
+      # If using TLS or secured Zookeeper, set the path to directory that contains the certificates or keystores.
+      # The local path should be mounted to the same directory as CERTIFICATE_DIRECTORY in env_file.
+      #- PATH_TO_CERTIFICATES:/CERTIFICATE_DIRECTORY
+      
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms128m
+      
+      - TWAS_THINGWORX_HOSTNAME=${THINGWORX_HOSTNAME}
+      - TWAS_THINGWORX_PORT=${THINGWORX_PORT}
+      - TWAS_THINGWORX_APPLICATION_KEY=${THINGWORX_APPLICATION_KEY}
+      - TWAS_THINGWORX_ISSECURE=${THINGWORX_ISSECURE}
+      
+      - TWX_CONTAINER=async
+      - TWAS_DB_DRIVER=org.h2.Driver
+      - TWAS_DB_PROVIDER=h2
+      - TWAS_DB_DIALECT=org.hibernate.dialect.H2Dialect
+      - TWAS_DB_USER=twadmin
+      - TWAS_DB_PASSWORD=twadmin
+      - TWAS_DB_FULL_URL=jdbc:h2:file:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/data/h2/async
+      
+      - ENCRYPTION_CONTAINER=async
+      - LOGBACK_FILE=file:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config/logback.xml
+      - KEY_STORE_API_KEY_EXPIRATION=2099-01-30
+      - USE_HTTPS=false
+      - USE_SECURE_ZOOKEEPER=false
+    build:
+      context: ./async
+      args:
+        base_image: 'ubuntu:22.04'      
+
+  # Stores the datasets uploaded to ThingWorx Analytics Server.
+  twas-sync:
+    image: ghcr.io/pdsvision/twx-analytics-sync-ms:9.5.0.4
+    networks:
+      - twasnetwork
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    container_name: twas-sync-ms
+    volumes:
+      - twas_properties:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config
+      - twas_data:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/data
+      - twas_storage:/AnalyticsServiceStorage
+      # If using TLS, set the path to directory that contains the certificates.
+      # The local path should be mounted to the same directory as CERTIFICATE_DIRECTORY in env_file.
+      #- PATH_TO_CERTIFICATES:/CERTIFICATE_DIRECTORY
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms128m
+      - TWX_CONTAINER=sync
+      
+      - TWAS_THINGWORX_HOSTNAME=${THINGWORX_HOSTNAME}
+      - TWAS_THINGWORX_PORT=${THINGWORX_PORT}
+      - TWAS_THINGWORX_APPLICATION_KEY=${THINGWORX_APPLICATION_KEY}
+      - TWAS_THINGWORX_ISSECURE=${THINGWORX_ISSECURE}
+      
+      - ENCRYPTION_CONTAINER=async
+      - LOGBACK_FILE=file:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config/logback.xml
+      - KEY_STORE_API_KEY_EXPIRATION=2099-01-30
+      - USE_HTTPS=false
+      - USE_SECURE_ZOOKEEPER=false
+    build:
+      context: ./sync
+      args:
+        base_image: 'ubuntu:22.04'      
+
+  # Trains a machine-learning model on a dataset.
+  #===================
+  # Analytics Workers
+  #-------------------
+
+  # Worker threads run the asynchronous jobs for the ThingWorx Analytics Server microservices.
+  # You can create multiple workers (with unique names) to run jobs in parallel.
+
+  twas-worker1:
+    image: ghcr.io/pdsvision/twx-analytics-worker-ms:9.5.0.4
+    networks:
+      - twasnetwork
+    container_name: twas-worker1
+    volumes:
+      - twas_properties:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/config
+      - twas_data:/opt/ThingWorxAnalytics/ThingWorxAnalyticsServer/data
+      - twas_storage:/AnalyticsServiceStorage
+      - twas_zookeeper_secrets:/zookeeper/certificates
+      # If using TLS or secured Zookeeper, set the path to directory that contains the certificates or keystores.
+      # The local path should be mounted to the same directory as CERTIFICATE_DIRECTORY in env_file.
+      #- PATH_TO_CERTIFICATES:/CERTIFICATE_DIRECTORY
+    environment:
+      - JAVA_OPTS=-Xmx4g -Xms512m
+      
+      - TWAS_THINGWORX_HOSTNAME=${THINGWORX_HOSTNAME}
+      - TWAS_THINGWORX_PORT=${THINGWORX_PORT}
+      - TWAS_THINGWORX_APPLICATION_KEY=${THINGWORX_APPLICATION_KEY}
+      - TWAS_THINGWORX_ISSECURE=${THINGWORX_ISSECURE}
+    restart: unless-stopped
+    depends_on:
+      - twas-async
+    build:
+      context: ./worker
+      args:
+        base_image: 'ubuntu:22.04'      
+        
+###############################################################################################################
+
+networks:
+  twasnetwork:
+     driver: bridge
+     
+volumes:
+  twas_properties:
+  twas_data:
+  twas_storage:
+  twas_zookeeper_secrets:
