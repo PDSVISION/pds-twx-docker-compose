@@ -5,7 +5,7 @@ volumes:
 
 services:
   mssql:
-    image: mcr.microsoft.com/mssql/server:server:2022-CU5-ubuntu-20.04
+    image: mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04
     ports:
       - "1433"
     healthcheck:
