@@ -9,7 +9,7 @@ services:
     ports:
       - "1433"
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -U SA -P "$${SA_PASSWORD}" -h -1 -Q "set nocount on; select serverproperty('ServerName')" | grep -w "$${HOSTNAME}"
+      test: /opt/mssql-tools18/bin/sqlcmd -C -U SA -P "$${SA_PASSWORD}" -h -1 -Q "set nocount on; select serverproperty('ServerName')" | grep -w "$${HOSTNAME}"
       interval: 15s
     environment:
       - "SA_PASSWORD=ThingworxVision001"
