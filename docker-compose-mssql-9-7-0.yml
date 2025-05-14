@@ -9,10 +9,10 @@ services:
     ports:
       - "1433"
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -C -U SA -P "$${SA_PASSWORD}" -h -1 -Q "set nocount on; select serverproperty('ServerName')" | grep -w "$${HOSTNAME}"
+      test: /opt/mssql-tools18/bin/sqlcmd -C -U SA -P "$${MSSQL_SA_PASSWORD}" -h -1 -Q "set nocount on; select serverproperty('ServerName')" | grep -w "$${HOSTNAME}"
       interval: 15s
     environment:
-      - "SA_PASSWORD=ThingworxVision001"
+      - "MSSQL_SA_PASSWORD=Thingw0rxVi$ion001"
       - "ACCEPT_EULA=Y"
 
   mssql-init:
@@ -21,7 +21,7 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "grep 'success' tmp/status.txt || exit 1" ]
       interval: 15s
-      retries: 5
+      retries: 10
     depends_on:
       mssql:
         condition: service_healthy
@@ -29,10 +29,10 @@ services:
       - "DATABASE_HOST=mssql"
       - "DATABASE_PORT=1433"
       - "DATABASE_ADMIN_USERNAME=SA"
-      - "DATABASE_ADMIN_PASSWORD=ThingworxVision001"
+      - "DATABASE_ADMIN_PASSWORD=Thingw0rxVi$ion001"
       - "TWX_DATABASE_USERNAME=thingworx"
       - "TWX_DATABASE_SCHEMA=thingworx"
-      - "TWX_DATABASE_PASSWORD=ThingWorxVision002"
+      - "TWX_DATABASE_PASSWORD=ThingW0rxVi$ion002"
 
   platform:
     image: ghcr.io/pdsvision/thingworx-platform-mssql:9.7.0
@@ -51,7 +51,7 @@ services:
       - "DATABASE_PORT=1433"
       - "TWX_DATABASE_SCHEMA=thingworx"
       - "TWX_DATABASE_USERNAME=thingworx"
-      - "TWX_DATABASE_PASSWORD=ThingWorxVision002"
+      - "TWX_DATABASE_PASSWORD=ThingW0rxVi$ion002"
       - "THINGWORX_INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
       - "THINGWORX_INITIAL_METRICS_USER_PASSWORD=${METRICS_PASSWORD}"
       - "LS_USERNAME=${LS_USERNAME}"
